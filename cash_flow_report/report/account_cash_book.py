@@ -1,24 +1,4 @@
 # -*- coding: utf-8 -*-
-#############################################################################
-#
-#    Cybrosys Technologies Pvt. Ltd.
-#
-#    Copyright (C) 2019-TODAY Cybrosys Technologies(<https://www.cybrosys.com>)
-#    Author: Cybrosys Techno Solutions(<https://www.cybrosys.com>)
-#
-#    You can modify it under the terms of the GNU LESSER
-#    GENERAL PUBLIC LICENSE (LGPL v3), Version 3.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU LESSER GENERAL PUBLIC LICENSE (LGPL v3) for more details.
-#
-#    You should have received a copy of the GNU LESSER GENERAL PUBLIC LICENSE
-#    (LGPL v3) along with this program.
-#    If not, see <http://www.gnu.org/licenses/>.
-#
-#############################################################################
 import time
 from datetime import timedelta, datetime
 
@@ -26,9 +6,10 @@ from odoo import models, api, _
 from odoo.exceptions import UserError
 
 
-class DayBookPdfReport(models.AbstractModel):
-    _name = 'report.cahs_flow_report.day_book_report_template'
-    _description = 'Day Book Report'
+class ReportCashBook(models.AbstractModel):
+    _name = 'report.cash_flow_report.report_cash_book'
+    _description = 'Cash Book Report'
+
 
     def _get_account_move_entry(self, accounts, form_data, pass_date):
         cr = self.env.cr
@@ -75,6 +56,7 @@ class DayBookPdfReport(models.AbstractModel):
 
     @api.model
     def _get_report_values(self, docids, data=None):
+    
         if not data.get('form') or not self.env.context.get('active_model'):
             raise UserError(
                 _("Form content is missing, this report cannot be printed."))
@@ -123,3 +105,7 @@ class DayBookPdfReport(models.AbstractModel):
             'Accounts': record,
             'print_journal': codes,
         }
+
+    def render_html(self, docids, data=None):
+        docargs = self._get_report_values(docids, data=data)
+        return self.env['report'].render("cash_flow_report.report_cash_book", docargs)

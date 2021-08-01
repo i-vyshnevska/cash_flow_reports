@@ -7,8 +7,7 @@ from odoo.exceptions import UserError
 
 class CashBookWizard(models.TransientModel):
 
-    # _inherit = "account.common.account.report"
-    _name = 'account.cash.book.report'
+    _name = 'account.cash.book.wizard'
     _description = 'Account Cash Book Report'
 
     company_id = fields.Many2one('res.company', string='Company',
@@ -30,7 +29,8 @@ class CashBookWizard(models.TransientModel):
         string='Sort by',
         required=True, default='sort_date')
     initial_balance = fields.Boolean(string='Include Initial Balances',
-                                     help='If you selected date, this field allow you to add a row to display the amount of debit/credit/balance that precedes the filter you\'ve set.')
+                                     help='If you selected date, this field allow you to add a row to display the amount of debit/credit/balance that precedes the filter you\'ve set.',
+                                     default=True)
 
     def _get_default_account_ids(self):
         journals = self.env['account.journal'].search([('type', '=', 'cash')])
@@ -50,17 +50,6 @@ class CashBookWizard(models.TransientModel):
                                    string='Journals', required=True,
                                    default=lambda self: self.env[
                                        'account.journal'].search([("type", "=", "cash")]))
-
-    @api.onchange('account_ids')
-    def onchange_account_ids(self):
-        if self.account_ids:
-            journals = self.env['account.journal'].search(
-                [('type', '=', 'cash')])
-            accounts = []
-            for journal in journals:
-                accounts.append(journal.default_credit_account_id.id)
-            domain = {'account_ids': [('id', 'in', accounts)]}
-            return {'domain': domain}
 
     def _build_contexts(self, data):
         result = {}
@@ -91,5 +80,5 @@ class CashBookWizard(models.TransientModel):
         return self._print_report(data)
 
     def _print_report(self, data):
-        # data = self.pre_print_report(data)
-        return self.env['report'].with_context(landscape=True).get_action(self, 'cahs_flow_report.report_cash_book', data=data)
+        return self.env['report'].with_context(landscape=True).get_action(
+            self, 'cash_flow_report.report_cash_book', data=data)

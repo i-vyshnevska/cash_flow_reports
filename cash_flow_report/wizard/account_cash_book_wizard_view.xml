@@ -3,7 +3,7 @@
     <data>
         <record id="account_cash_book_form_view" model="ir.ui.view">
             <field name="name">account.cash.book.form.view</field>
-            <field name="model">account.cash.book.report</field>
+            <field name="model">account.cash.book.wizard</field>
             <field name="arch" type="xml">
                 <form string="Cash Book Report">
                     <field name="company_id" invisible="1"/>
@@ -31,13 +31,13 @@
         <record id="action_account_cash_book_view" model="ir.actions.act_window">
             <field name="name">Cash Book Report</field>
             <field name="type">ir.actions.act_window</field>
-            <field name="res_model">account.cash.book.report</field>
+            <field name="res_model">account.cash.book.wizard</field>
             <field name="view_id" ref="account_cash_book_form_view"/>
             <field name="view_mode">form</field>
             <field name="target">new</field>
         </record>
 
         <menuitem id="account_cash_book_menu" name="Cash Book" action="action_account_cash_book_view"
-                  parent="cahs_flow_report.account_reports_daily_reports"/>
+                  parent="account.menu_finance_reports"/>
     </data>
 </odoo>
