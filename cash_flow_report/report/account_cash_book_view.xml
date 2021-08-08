@@ -44,7 +44,7 @@
                                 <th>Debit</th>
                                 <th>Credit</th>
                                 <th>Balance</th>
-                                <th groups="base.group_multi_currency">Currency</th>
+                                <!-- <th groups="base.group_multi_currency">Currency</th> -->
                             </tr>
                         </thead>
                         <tbody>
@@ -58,7 +58,7 @@
                                     <td>
                                         <span t-esc="general_balance" />
                                     </td>
-                                    <td groups="base.group_multi_currency"/>
+                                    <!-- <td groups="base.group_multi_currency"/> -->
                                 </tr>
                                 <tr t-foreach="account['child_lines']" t-as="line">
                                     <td>
@@ -88,10 +88,10 @@
                                     <td>
                                         <span t-esc="line['balance']"/>
                                     </td>
-                                    <td t-if="line['amount_currency']" class="text-right" groups="base.group_multi_currency">
+                                    <!-- <td t-if="line['amount_currency']" class="text-right" groups="base.group_multi_currency">
                                         <span t-esc="line['amount_currency'] if line['amount_currency'] > 0.00 else ''"/>
                                         <span t-esc="line['currency_code'] if line['amount_currency'] > 0.00 else ''"/>
-                                    </td>
+                                    </td> -->
                                 </tr>
 
                                 <tr style="font-weight: bold;background: #ededed;">
