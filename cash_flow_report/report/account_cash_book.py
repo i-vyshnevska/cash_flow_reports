@@ -55,47 +55,6 @@ class ReportCashBook(models.AbstractModel):
             for row in cr.dictfetchall():
                 move_lines.append(row)
 
-        # start balance
-        yesterday = fields.Date.to_string(fields.Datetime.from_string(self.env.context.get('date_from')) - timedelta(days=1))
-        init_tables, init_where_clause, init_where_params = move_line.with_context(
-            date_from=yesterday, date_to=False,
-            initial_bal=True)._query_get()
-        init_wheres = [""]
-        if init_where_clause.strip():
-            init_wheres.append(init_where_clause.strip())
-        init_filters = " AND ".join(init_wheres)
-        filters = init_filters.replace('account_move_line__move_id',
-                                        'm').replace('account_move_line',
-                                                    'l')
-        sql = ("""SELECT 0 AS lid, 
-                    l.account_id AS account_id, 
-                    '' AS ldate, 
-                    '' AS lcode, 
-                    0.0 AS amount_currency, 
-                    '' AS lref, 
-                    'Initial Balance' AS lname, 
-                    COALESCE(SUM(l.debit),0.0) AS debit, 
-                    COALESCE(SUM(l.credit),0.0) AS credit, 
-                    COALESCE(SUM(l.debit),0) - COALESCE(SUM(l.credit), 0) as balance, 
-                    '' AS lpartner_id,\
-                '' AS move_name, '' AS mmove_id, '' AS currency_code,\
-                NULL AS currency_id,\
-                '' AS invoice_id, '' AS invoice_type, '' AS invoice_number,\
-                '' AS partner_name\
-                FROM account_move_line l\
-                LEFT JOIN account_move m ON (l.move_id=m.id)\
-                LEFT JOIN res_currency c ON (l.currency_id=c.id)\
-                LEFT JOIN res_partner p ON (l.partner_id=p.id)\
-                JOIN account_journal j ON (l.journal_id=j.id)\
-                WHERE l.account_id = %s""" + filters + ' GROUP BY l.account_id')
-        params = (tuple([account_id]) + tuple(init_where_params))
-        cr.execute(sql, params)
-        result = cr.dictfetchall()
-        if result:
-            res["start_balance"] = result[0]["balance"]
-        else:
-            res["start_balance"] = 0
-
 
         tables, where_clause, where_params = move_line._query_get()
         wheres = [""]
@@ -165,23 +124,22 @@ class ReportCashBook(models.AbstractModel):
             dates.append(date_start + timedelta(days=i))
         for head in dates:
             pass_date = str(head)
-            accounts_res = self.with_context(
-                data['form'].get('used_context', {}))._get_account_move_entry(
-                account, init_balance, form_data, pass_date)
+            accounts_res = self.with_context(data['form'].get('used_context', {}))._get_account_move_entry(account, init_balance, form_data, pass_date)
             if accounts_res['lines']:
                 record.append({
                     'date': head,
-                    'start_balance': accounts_res['start_balance'],
                     'end_balance': accounts_res['end_balance'],
                     'debit': accounts_res['debit'],
                     'credit': accounts_res['credit'],
                     'balance': accounts_res['balance'],
                     'child_lines': accounts_res['lines']
                 })
+            
         return {
             'doc_ids': docids,
             'doc_model': self.model,
             'data': data['form'],
+            'start_balance': self._get_start_balance(account, init_balance, form_data, pass_date),
             'docs': docs,
             'time': time,
             'Accounts': record,
@@ -191,3 +149,46 @@ class ReportCashBook(models.AbstractModel):
     def render_html(self, docids, data=None):
         docargs = self._get_report_values(docids, data=data)
         return self.env['report'].render("cash_flow_report.report_cash_book", docargs)
+
+    def _get_start_balance(self, account_id, init_balance, form_data, pass_date):
+        # start balance
+        move_line = self.env['account.move.line']
+        cr = self.env.cr
+        yesterday = fields.Date.to_string(fields.Datetime.from_string(form_data["date_from"]) - timedelta(days=1))
+        init_tables, init_where_clause, init_where_params = move_line.with_context(
+            date_from=False, date_to=yesterday,
+            initial_bal=False)._query_get()
+        init_wheres = [""]
+        if init_where_clause.strip():
+            init_wheres.append(init_where_clause.strip())
+        init_filters = " AND ".join(init_wheres)
+        filters = init_filters.replace('account_move_line__move_id',
+                                        'm').replace('account_move_line',
+                                                    'l')
+        sql = ("""SELECT 0 AS lid, 
+                    l.account_id AS account_id, 
+                    '' AS ldate, 
+                    '' AS lcode, 
+                    0.0 AS amount_currency, 
+                    '' AS lref, 
+                    'Initial Balance' AS lname, 
+                    COALESCE(SUM(l.debit),0.0) AS debit, 
+                    COALESCE(SUM(l.credit),0.0) AS credit, 
+                    COALESCE(SUM(l.debit),0) - COALESCE(SUM(l.credit), 0) as balance, 
+                    '' AS lpartner_id,\
+                '' AS move_name, '' AS mmove_id, '' AS currency_code,\
+                NULL AS currency_id,\
+                '' AS invoice_id, '' AS invoice_type, '' AS invoice_number,\
+                '' AS partner_name\
+                FROM account_move_line l\
+                LEFT JOIN account_move m ON (l.move_id=m.id)\
+                LEFT JOIN res_currency c ON (l.currency_id=c.id)\
+                LEFT JOIN res_partner p ON (l.partner_id=p.id)\
+                JOIN account_journal j ON (l.journal_id=j.id)\
+                WHERE l.account_id = %s""" + filters + ' GROUP BY l.account_id')
+        params = (tuple([account_id]) + tuple(init_where_params))
+        cr.execute(sql, params)
+        result = cr.dictfetchall()
+        if result:
+            return result[0]["balance"]
+        return 0

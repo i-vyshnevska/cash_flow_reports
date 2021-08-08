@@ -48,7 +48,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <t t-set="general_balance" t-value="Accounts[0]['start_balance']"/>
+                            <t t-set="general_balance" t-value="start_balance"/>
                             <t t-foreach="Accounts" t-as="account">
                                 <tr style="font-weight: bold;background: #ededed;">
                                     <td colspan="8">
