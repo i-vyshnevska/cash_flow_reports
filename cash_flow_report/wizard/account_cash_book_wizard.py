@@ -31,16 +31,16 @@ class CashBookWizard(models.TransientModel):
     initial_balance = fields.Boolean(string='Include Initial Balances',
                                      help='If you selected date, this field allow you to add a row to display the amount of debit/credit/balance that precedes the filter you\'ve set.',
                                      default=True)
-
-    @api.onchange("journal_id")
-    def onchnage_account_ids(self):
-        if self.journal_id:
-            self.account_id = self.journal_id.default_credit_account_id
-
     account_id = fields.Many2one('account.account',
                                    'Account',)
     journal_id = fields.Many2one('account.journal',
                                    string='Journal', required=True,)
+
+    @api.onchange("journal_id")
+    def onchnage_journal_id(self):
+        if self.journal_id:
+            self.account_id = self.journal_id.default_credit_account_id
+
 
     def _build_contexts(self, data):
         result = {}
