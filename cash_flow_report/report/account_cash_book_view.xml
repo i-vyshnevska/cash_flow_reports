@@ -48,20 +48,15 @@
                             </tr>
                         </thead>
                         <tbody>
+                            <t t-set="general_balance" t-value="Accounts[0]['start_balance']"/>
                             <t t-foreach="Accounts" t-as="account">
                                 <tr style="font-weight: bold;background: #ededed;">
-                                    <td colspan="6">
+                                    <td colspan="8">
                                         <span style="color: white;" t-esc="'..'"/>
                                         <span t-esc="account['date']"/>
                                     </td>
-                                    <td class="text-right">
-                                        <span t-esc="account['debit']" />
-                                    </td>
-                                    <td class="text-right">
-                                        <span t-esc="account['credit']" />
-                                    </td>
-                                    <td class="text-right">
-                                        <span t-esc="account['balance']" />
+                                    <td>
+                                        <span t-esc="general_balance" />
                                     </td>
                                     <td groups="base.group_multi_currency"/>
                                 </tr>
@@ -84,13 +79,13 @@
                                     <td>
                                         <span t-esc="line['lname']"/>
                                     </td>
-                                    <td class="text-right">
+                                    <td>
                                         <span t-esc="line['debit']"/>
                                     </td>
-                                    <td class="text-right">
+                                    <td>
                                         <span t-esc="line['credit']"/>
                                     </td>
-                                    <td class="text-right">
+                                    <td>
                                         <span t-esc="line['balance']"/>
                                     </td>
                                     <td t-if="line['amount_currency']" class="text-right" groups="base.group_multi_currency">
@@ -98,6 +93,18 @@
                                         <span t-esc="line['currency_code'] if line['amount_currency'] > 0.00 else ''"/>
                                     </td>
                                 </tr>
+
+                                <tr style="font-weight: bold;background: #ededed;">
+                                    <td colspan="8">
+                                        <span>End balance</span>
+                                    </td>
+                                    <td >
+                                        <!-- <span t-esc="account['end_balance']" /> -->
+                                        <t t-set="general_balance" t-value="general_balance + account['end_balance']"/>
+                                        <span t-esc="general_balance" />
+                                    </td>
+                                </tr>
+
                             </t>
                         </tbody>
                     </table>

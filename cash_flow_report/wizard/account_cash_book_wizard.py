@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from datetime import date
+from datetime import date, timedelta
 
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
@@ -16,7 +16,7 @@ class CashBookWizard(models.TransientModel):
     target_move = fields.Selection([('posted', 'All Posted Entries'),
                                     ('all', 'All Entries')], string='Target Moves', required=True,
                                    default='posted')
-    date_from = fields.Date(string='Start Date', default=date.today(),
+    date_from = fields.Date(string='Start Date', default=date.today()-timedelta(days=7),
                             requred=True)
     date_to = fields.Date(string='End Date', default=date.today(),
                           requred=True)
@@ -33,28 +33,21 @@ class CashBookWizard(models.TransientModel):
                                      default=True)
 
     def _get_default_account_ids(self):
-        journals = self.env['account.journal'].search([('type', '=', 'cash')])
-        accounts = []
-        for journal in journals:
-            accounts.append(journal.default_credit_account_id.id)
-        return accounts
+        journal = self.env['account.journal'].search([('type', '=', 'cash')])
+        return journal.default_credit_account_id
 
-    account_ids = fields.Many2many('account.account',
-                                   'account_report_cashbook_account_rel',
-                                   'report_id', 'account_id',
-                                   'Accounts',
+    account_id = fields.Many2one('account.account',
+                                   'Account',
                                    default=_get_default_account_ids)
-    journal_ids = fields.Many2many('account.journal',
-                                   'account_report_cashbook_journal_rel',
-                                   'account_id', 'journal_id',
-                                   string='Journals', required=True,
+    journal_id = fields.Many2one('account.journal',
+                                   string='Journal', required=True,
                                    default=lambda self: self.env[
-                                       'account.journal'].search([("type", "=", "cash")]))
+                                       'account.journal'].search([("type", "=", "cash")], limit=1))
 
     def _build_contexts(self, data):
         result = {}
-        result['journal_ids'] = 'journal_ids' in data['form'] and data['form'][
-            'journal_ids'] or False
+        result['journal_id'] = 'journal_id' in data['form'] and data['form'][
+            'journal_id'] or False
         result['state'] = 'target_move' in data['form'] and data['form'][
             'target_move'] or ''
         result['date_from'] = data['form']['date_from'] or False
@@ -70,9 +63,9 @@ class CashBookWizard(models.TransientModel):
         data['ids'] = self.env.context.get('active_ids', [])
         data['model'] = self.env.context.get('active_model', 'ir.ui.menu')
         data['form'] = self.read(
-            ['date_from', 'date_to', 'journal_ids', 'target_move',
+            ['date_from', 'date_to', 'journal_id', 'target_move',
              'display_account',
-             'account_ids', 'sortby', 'initial_balance'])[0]
+             'account_id', 'sortby', 'initial_balance'])[0]
         used_context = self._build_contexts(data)
         data['form']['used_context'] = dict(used_context,
                                             lang=self.env.context.get(
